@@ -6,7 +6,7 @@ type PaymentModel struct {
 	Id            string    `json:"id"`
 	UserId        string    `json:"user_id"`
 	MerchantNoRek string    `json:"merchant_no_rek"`
-	Amount        string    `json:"amount"`
+	Amount        int    `json:"amount"`
 	CreatedAt     time.Time `json:"created_at"`
 }
 
