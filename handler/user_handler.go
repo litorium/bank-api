@@ -84,6 +84,7 @@ func (usrHandler UserHandler) AddUser(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"success": true,
+		"message": "Successfully added user",
 	})
 }
 
@@ -119,6 +120,7 @@ func (usrHandler UserHandler) UpdateUser(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"success": true,
+		"message": "User updated successfully",
 	})
 }
 

@@ -83,6 +83,7 @@ func (mctHandler *MerchantHandler) AddMerchant(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"success": true,
+		"message": "Successfully added Merchant",
 	})
 }
 
@@ -118,6 +119,7 @@ func (mctHandler *MerchantHandler) UpdateMerchant(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"success": true,
+		"message": "Successfully updated Merchant",
 	})
 }
 

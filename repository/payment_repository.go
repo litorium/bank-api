@@ -23,6 +23,23 @@ type paymentRepositoryImpl struct {
 }
 
 func (p *paymentRepositoryImpl) GetPaymentByUserId(userId string) ([]model.PaymentModel, error) {
+	// Validate userId
+	if userId == "" {
+		return nil, errors.New("userId cannot be empty")
+	}
+
+	// Check if userId exists in the users slice
+	var userExists bool
+	for _, user := range p.users {
+		if user.Id == userId {
+			userExists = true
+			break
+		}
+	}
+
+	if !userExists {
+		return nil, fmt.Errorf("user with id %s not found", userId)
+	}
 	var userPayments []model.PaymentModel
 	for _, py := range p.payments {
 		if py.UserId == userId {
