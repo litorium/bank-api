@@ -9,6 +9,7 @@ type UsecaseManager interface {
 	GetUserUsecase() usecase.UserUseCase
 	GetLoginUsecase() usecase.LoginUseCase
 	GetMerchantUsecase() usecase.MerchantUseCase
+	GetPaymentUsecase() usecase.PaymentUseCase
 }
 
 type usecaseManager struct {
@@ -17,11 +18,13 @@ type usecaseManager struct {
 	usrUsecase    usecase.UserUseCase
 	lgUsecase     usecase.LoginUseCase
 	mctUsecase 	  usecase.MerchantUseCase
+	pyUsecase 	  usecase.PaymentUseCase
 }
 
 var onceLoadUserUsecase sync.Once
 var onceLoadLoginUsecase sync.Once
 var onceLoadMerchantUsecase sync.Once
+var onceLoadPaymentUsecase sync.Once
 
 func (um *usecaseManager) GetUserUsecase() usecase.UserUseCase {
 	onceLoadUserUsecase.Do(func() {
@@ -42,6 +45,13 @@ func (um *usecaseManager) GetMerchantUsecase() usecase.MerchantUseCase {
 		um.mctUsecase = usecase.NewMerchantUseCase(um.repoManager.GetMerchantRepo())
 	})
 	return um.mctUsecase
+}
+
+func (um *usecaseManager) GetPaymentUsecase() usecase.PaymentUseCase {
+	onceLoadPaymentUsecase.Do(func() {
+		um.pyUsecase = usecase.NewPaymentUseCase(um.repoManager.GetPaymentRepo())
+	})
+	return um.pyUsecase
 }
 
 func NewUsecaseManager(repoManager RepoManager) UsecaseManager {

@@ -44,7 +44,6 @@ func (mctUseCase *merchantUseCaseImpl) UpdateMerchant(mct *model.MerchantModel) 
 			ErrorMessage: fmt.Sprintf("User data with the name %v already exists", mct.Name),
 		}
 	}
-	mct.Id = uuid.New().String()
 	return mctUseCase.mctRepo.UpdateMerchant(mct)
 }
 

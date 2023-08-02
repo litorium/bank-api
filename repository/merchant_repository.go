@@ -4,6 +4,7 @@ import (
 	"bank-api/model"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 )
 
@@ -21,19 +22,26 @@ type merchantRepositoryImpl struct {
 func (m *merchantRepositoryImpl) GetMerchantByName(name string) (*model.MerchantModel,error) {
 	for _, mct := range m.merchants {
 		if mct.Name == name {
-			return &mct,nil
+			return &mct, nil
 		}
 	}
 	return nil, errors.New("merchant not found")
 }
 
 func (m *merchantRepositoryImpl) UpdateMerchant(merchant *model.MerchantModel) error {
-	// Update the user in the slice
+	// Check if the user exists in the slice
+	found := false
 	for i, mct := range m.merchants {
 		if mct.Id == merchant.Id {
 			m.merchants[i] = *merchant
+			found = true
 			break
 		}
+	}
+
+	// If the merchant is not found, return an error
+	if !found {
+		return fmt.Errorf("merchant with ID %s not found", merchant.Id)
 	}
 
 	// Open the JSON file
@@ -43,32 +51,6 @@ func (m *merchantRepositoryImpl) UpdateMerchant(merchant *model.MerchantModel) e
 	}
 	defer file.Close()
 
-	// Encode the users slice back into the file
-	err = json.NewEncoder(file).Encode(m.merchants)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (m *merchantRepositoryImpl) DeleteMerchant(merchant *model.MerchantModel) error {
-	// Remove the user from the slice
-	for i, mct := range m.merchants {
-		if mct.Id == merchant.Id {
-			m.merchants = append(m.merchants[:i], m.merchants[i+1:]...)
-			break
-		}
-	}
-
-	// Open the JSON file
-	file, err := os.OpenFile("data/merchants.json", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	// Encode the users slice back into the file
 	err = json.NewEncoder(file).Encode(m.merchants)
 	if err != nil {
 		return err
@@ -98,6 +80,31 @@ func (m *merchantRepositoryImpl) AddMerchant(merchant *model.MerchantModel) erro
 	}
 	defer file.Close()
 
+	err = json.NewEncoder(file).Encode(m.merchants)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *merchantRepositoryImpl) DeleteMerchant(merchant *model.MerchantModel) error {
+	// Remove the user from the slice
+	for i, mct := range m.merchants {
+		if mct.Id == merchant.Id {
+			m.merchants = append(m.merchants[:i], m.merchants[i+1:]...)
+			break
+		}
+	}
+
+	// Open the JSON file
+	file, err := os.OpenFile("data/merchants.json", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	// Encode the users slice back into the file
 	err = json.NewEncoder(file).Encode(m.merchants)
 	if err != nil {
 		return err

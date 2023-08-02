@@ -16,7 +16,7 @@ type MerchantHandler struct {
 	mctUseCase usecase.MerchantUseCase
 }
 
-func (mctHandler MerchantHandler) GetMerchantByMerchantname(ctx *gin.Context) {
+func (mctHandler *MerchantHandler) GetMerchantByMerchantname(ctx *gin.Context) {
 	name := ctx.Param("name")
 	mct, err := mctHandler.mctUseCase.GetMerchantByName(name)
 	if err != nil {
@@ -51,7 +51,7 @@ func (mctHandler MerchantHandler) GetMerchantByMerchantname(ctx *gin.Context) {
 	})
 }
 
-func (mctHandler MerchantHandler) AddMerchant(ctx *gin.Context) {
+func (mctHandler *MerchantHandler) AddMerchant(ctx *gin.Context) {
 	mct := &model.MerchantModel{}
 	err := ctx.ShouldBindJSON(&mct)
 	if err != nil {
@@ -86,7 +86,7 @@ func (mctHandler MerchantHandler) AddMerchant(ctx *gin.Context) {
 	})
 }
 
-func (mctHandler MerchantHandler) UpdateMerchant(ctx *gin.Context) {
+func (mctHandler *MerchantHandler) UpdateMerchant(ctx *gin.Context) {
 	mct := &model.MerchantModel{}
 	err := ctx.ShouldBindJSON(&mct)
 	if err != nil {

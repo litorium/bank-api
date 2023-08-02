@@ -4,6 +4,7 @@ import (
 	"bank-api/model"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 )
 
@@ -28,12 +29,19 @@ func (r *userRepositoryImpl) GetUserByUsername(username string) (*model.UserMode
 }
 
 func (r *userRepositoryImpl) UpdateUser(user *model.UserModel) error {
-	// Update the user in the slice
-	for i, usr := range r.users {
-		if usr.Id == user.Id {
+	// Check if the user exists in the slice
+	found := false
+	for i, mct := range r.users {
+		if mct.Id == user.Id {
 			r.users[i] = *user
+			found = true
 			break
 		}
+	}
+
+	// If the user is not found, return an error
+	if !found {
+		return fmt.Errorf("user with ID %s not found", user.Id)
 	}
 
 	// Open the JSON file
@@ -43,7 +51,6 @@ func (r *userRepositoryImpl) UpdateUser(user *model.UserModel) error {
 	}
 	defer file.Close()
 
-	// Encode the users slice back into the file
 	err = json.NewEncoder(file).Encode(r.users)
 	if err != nil {
 		return err

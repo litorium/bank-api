@@ -102,13 +102,13 @@ func (usrHandler UserHandler) UpdateUser(ctx *gin.Context) {
 	if err != nil {
 		appError := &utils.AppError{}
 		if errors.As(err, &appError) {
-			fmt.Printf("UserHandler.EditUser() 1: %v", err.Error())
+			fmt.Printf("UserHandler.UpdateUser() 1: %v", err.Error())
 			ctx.JSON(http.StatusInternalServerError, gin.H{
 				"success":      false,
 				"errorMessage": appError.Error(),
 			})
 		} else {
-			fmt.Printf("UserHandler.EditUser() 2: %v", err.Error())
+			fmt.Printf("UserHandler.UpdateUser() 2: %v", err.Error())
 			ctx.JSON(http.StatusInternalServerError, gin.H{
 				"success":      false,
 				"errorMessage": "An error occurred while saving user data",

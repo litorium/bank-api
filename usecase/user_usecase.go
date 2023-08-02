@@ -57,11 +57,8 @@ func (usrUseCase *userUseCaseImpl) UpdateUser(usr *model.UserModel) error {
 		}
 	}
 
-	existDataUsr, err := usrUseCase.usrRepo.GetUserByUsername(usr.UserName)
-	if err != nil {
-		return fmt.Errorf("userUseCaseImpl.GetUserByName(): %w", err)
-	}
-	if existDataUsr != nil && existDataUsr.Id != usr.Id {
+	existDataUsr, _ := usrUseCase.usrRepo.GetUserByUsername(usr.UserName)
+	if existDataUsr != nil {
 		return &utils.AppError{
 			ErrorCode:    1,
 			ErrorMessage: fmt.Sprintf("User data with the username %v already exists", usr.UserName),
