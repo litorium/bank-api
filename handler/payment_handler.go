@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 )
 
@@ -17,18 +18,30 @@ type PaymentHandler struct {
 }
 
 func (pyHandler *PaymentHandler) GetPaymentByUserId(ctx *gin.Context) {
-	id := ctx.Param("id")
-	py, err := pyHandler.pyUseCase.GetPaymentByUserId(id)
+	// Dapatkan user ID dari session
+	session := sessions.Default(ctx)
+	existSession := session.Get("Id")
+	userId, ok := existSession.(string)
+	if !ok {
+		ctx.JSON(http.StatusUnauthorized, gin.H{
+			"success":      false,
+			"errorMessage": "User session not found or invalid",
+		})
+		return
+	}
+
+	// Panggil use case untuk mendapatkan payment berdasarkan user ID (userId dari session)
+	py, err := pyHandler.pyUseCase.GetPaymentByUserId(userId)
 	if err != nil {
 		appError := &utils.AppError{}
 		if errors.As(err, &appError) {
-			fmt.Printf("PaymentHandler.GetPaymentByName() 1: %v", err.Error())
+			fmt.Printf("PaymentHandler.GetPaymentByUserId() 1: %v", err.Error())
 			ctx.JSON(http.StatusInternalServerError, gin.H{
 				"success":      false,
 				"errorMessage": appError.Error(),
 			})
 		} else {
-			fmt.Printf("PaymentHandler.GetPaymentByName() 2: %v", err.Error())
+			fmt.Printf("PaymentHandler.GetPaymentByUserId() 2: %v", err.Error())
 			ctx.JSON(http.StatusInternalServerError, gin.H{
 				"success":      false,
 				"errorMessage": "An error occurred while fetching Payment data",
@@ -62,7 +75,7 @@ func (pyHandler *PaymentHandler) AddPayment(ctx *gin.Context) {
 		return
 	}
 
-	err = pyHandler.pyUseCase.AddPayment(py)
+	err = pyHandler.pyUseCase.AddPayment(py, ctx)
 	if err != nil {
 		appError := &utils.AppError{}
 		if errors.As(err, &appError) {
@@ -83,6 +96,7 @@ func (pyHandler *PaymentHandler) AddPayment(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"success": true,
+		"message": "Succesfully added payment",
 	})
 }
 
@@ -93,6 +107,6 @@ func NewPaymentHandler(srv *gin.Engine, pyUseCase usecase.PaymentUseCase) *Payme
 
 	// route
 	srv.POST("/payment", middleware.RequireToken(), pyHandler.AddPayment)
-	srv.GET("/payment/:id", middleware.RequireToken(), pyHandler.GetPaymentByUserId)
+	srv.GET("/payment", middleware.RequireToken(), pyHandler.GetPaymentByUserId)
 	return pyHandler
 }

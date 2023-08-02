@@ -8,11 +8,13 @@ import (
 	"os"
 	"time"
 
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
 type PaymentRepository interface {
-	AddPayment(*model.PaymentModel) error
+	AddPayment(*model.PaymentModel, *gin.Context) error
 	GetPaymentByUserId(string) ([]model.PaymentModel, error)
 }
 
@@ -54,17 +56,24 @@ func (p *paymentRepositoryImpl) GetPaymentByUserId(userId string) ([]model.Payme
 	return userPayments, nil
 }
 
-func (p *paymentRepositoryImpl) AddPayment(paymentInput *model.PaymentModel) error {
+func (p *paymentRepositoryImpl) AddPayment(paymentInput *model.PaymentModel, ctx *gin.Context) error {
 	var user model.UserModel
+	session := sessions.Default(ctx)
+	existSession := session.Get("Id")
+	userId, ok := existSession.(string)
+	if !ok {
+		return errors.New("session user ID not found")
+	}
+
 	for _, u := range p.users {
-		if u.Id == paymentInput.UserId {
+		if u.Id == userId {
 			user = u
 			break
 		}
 	}
 
 	if user.Id == "" {
-		return fmt.Errorf("user dengan id tersebut tidak ditemukan")
+		return fmt.Errorf("user dengan id %s tidak ditemukan", userId)
 	}
 
 	var merchant model.MerchantModel
@@ -80,11 +89,11 @@ func (p *paymentRepositoryImpl) AddPayment(paymentInput *model.PaymentModel) err
 	}
 
 	payment := model.PaymentModel{
-		Id: uuid.New().String(),
-		UserId:     user.Id,
+		Id:           uuid.New().String(),
+		UserId:       userId, // Mengisi UserId dengan session user ID
 		MerchantNoRek: merchant.NoRek,
-		Amount:     paymentInput.Amount,
-		CreatedAt: time.Now().UTC(),
+		Amount:       paymentInput.Amount,
+		CreatedAt:    time.Now().UTC(),
 	}
 
 	p.payments = append(p.payments, payment)

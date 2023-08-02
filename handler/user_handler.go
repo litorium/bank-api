@@ -10,6 +10,7 @@ import (
 
 	"net/http"
 
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 )
 
@@ -18,8 +19,17 @@ type UserHandler struct {
 }
 
 func (usrHandler UserHandler) GetUserByUsername(ctx *gin.Context) {
-	username := ctx.Param("username")
-	usr, err := usrHandler.usrUseCase.GetUserByUsername(username)
+	session := sessions.Default(ctx)
+	existSession := session.Get("Username")
+	userName, ok := existSession.(string)
+	if !ok {
+		ctx.JSON(http.StatusUnauthorized, gin.H{
+			"success":      false,
+			"errorMessage": "User session not found or invalid",
+		})
+		return
+	}
+	usr, err := usrHandler.usrUseCase.GetUserByUsername(userName)
 	if err != nil {
 		appError := &utils.AppError{}
 		if errors.As(err, &appError) {
@@ -32,7 +42,8 @@ func (usrHandler UserHandler) GetUserByUsername(ctx *gin.Context) {
 			fmt.Printf("UserHandler.GetUserByName() 2: %v", err.Error())
 			ctx.JSON(http.StatusInternalServerError, gin.H{
 				"success":      false,
-				"errorMessage": "An error occurred while fetching user data",
+				"errorMessage": err.Error(),
+				
 			})
 			return
 		}
@@ -99,7 +110,7 @@ func (usrHandler UserHandler) UpdateUser(ctx *gin.Context) {
 		return
 	}
 
-	err = usrHandler.usrUseCase.UpdateUser(usr)
+	err = usrHandler.usrUseCase.UpdateUser(usr, ctx)
 	if err != nil {
 		appError := &utils.AppError{}
 		if errors.As(err, &appError) {
@@ -125,10 +136,21 @@ func (usrHandler UserHandler) UpdateUser(ctx *gin.Context) {
 }
 
 func (usrHandler *UserHandler) DeleteUser(ctx *gin.Context) {
-	username := ctx.Param("username")
-	
-	if err := usrHandler.usrUseCase.DeleteUser(username); err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete user"})
+	session := sessions.Default(ctx)
+	existSession := session.Get("Username")
+	userName, ok := existSession.(string)
+	if !ok {
+		ctx.JSON(http.StatusUnauthorized, gin.H{
+			"success":      false,
+			"errorMessage": "User session not found or invalid",
+		})
+		return
+	}
+	if err := usrHandler.usrUseCase.DeleteUser(userName); err != nil {
+		fmt.Printf("UserHandler.DeleteUser(): %v", err.Error())
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to delete user",
+		})
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{
@@ -145,7 +167,7 @@ func NewUserHandler(srv *gin.Engine, usrUseCase usecase.UserUseCase) *UserHandle
 	// route
 	srv.POST("/user", usrHandler.AddUser)
 	srv.PUT("/user", middleware.RequireToken(), usrHandler.UpdateUser)
-	srv.GET("/user/:username", middleware.RequireToken(), usrHandler.GetUserByUsername)
-	srv.DELETE("/users/:username", middleware.RequireToken(), usrHandler.DeleteUser)
+	srv.GET("/user", middleware.RequireToken(), usrHandler.GetUserByUsername)
+	srv.DELETE("/user", middleware.RequireToken(), usrHandler.DeleteUser)
 	return usrHandler
 }

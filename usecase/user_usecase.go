@@ -6,6 +6,8 @@ import (
 	"bank-api/utils"
 	"fmt"
 
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -13,7 +15,7 @@ import (
 type UserUseCase interface {
 	AddUser(*model.UserModel) error
 	GetUserByUsername(string) (*model.UserModel, error)
-	UpdateUser(*model.UserModel) error
+	UpdateUser(*model.UserModel, *gin.Context) error
 	DeleteUser(string) error
 }
 
@@ -26,6 +28,24 @@ func (usrUseCase *userUseCaseImpl) GetUserByUsername(username string) (*model.Us
 }
 
 func (usrUseCase *userUseCaseImpl) AddUser(usr *model.UserModel) error {
+	if usr.UserName == "" {
+		return &utils.AppError{
+			ErrorCode:    1,
+			ErrorMessage: "Name cannot be empty",
+		}
+	}
+	if len(usr.UserName) < 3 || len(usr.UserName) > 20 {
+		return &utils.AppError{
+			ErrorCode:    2,
+			ErrorMessage: "Name must be between 3 and 20 characters",
+		}
+	}
+	if usr.Password == "" {
+		return &utils.AppError{
+			ErrorCode:    3,
+			ErrorMessage: "Password cannot be empty",
+		}
+	}
 	user,_ := usrUseCase.usrRepo.GetUserByUsername(usr.UserName)
 	if user != nil {
 		return &utils.AppError{
@@ -43,7 +63,10 @@ func (usrUseCase *userUseCaseImpl) AddUser(usr *model.UserModel) error {
    return usrUseCase.usrRepo.AddUser(usr)
 }
 
-func (usrUseCase *userUseCaseImpl) UpdateUser(usr *model.UserModel) error {
+func (usrUseCase *userUseCaseImpl) UpdateUser(usr *model.UserModel, ctx *gin.Context) error {
+	session := sessions.Default(ctx)
+	existSession := session.Get("Id")
+	usr.Id = existSession.(string)
 	if usr.UserName == "" {
 		return &utils.AppError{
 			ErrorCode:    1,
@@ -75,9 +98,9 @@ func (usrUseCase *userUseCaseImpl) UpdateUser(usr *model.UserModel) error {
 }
 
 func (usrUseCase *userUseCaseImpl) DeleteUser(username string) error {
-	user , err := usrUseCase.usrRepo.GetUserByUsername(username)
+	user , _:= usrUseCase.usrRepo.GetUserByUsername(username)
 	if user == nil {
-		return err
+		return fmt.Errorf("user %v does not exist", username)
 	}
 	return usrUseCase.usrRepo.DeleteUser(user)
 }
